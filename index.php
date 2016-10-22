@@ -13,61 +13,6 @@ table {border-collapse: collapse;}
 td    {padding: 0px;}
 
 
-
-
-      #rodzic {
-        background-color:black;
-        font-size:1.4em;
-		margin-right: auto; margin-left: auto;
-      }
-
-      #rodzic:after {
-        content:'';
-        display:block;
-		text-align: center;
-      }
-
-	  
-#dziecko1 {
-  float:left;
-	white-space: nowrap; 
-overflow: hidden; 
-text-overflow: ellipsis;
-  margin-bottom:0px;
-  background-color:lightblue;
-}
-
-#dziecko2 {
-  float:left;
-  margin-bottom:0px;
-  background-color:lightgreen;
-}
-
-#dziecko3 {
-  float:left;
-  margin-bottom:0px;
-  background-color:lightgreen;
-}
-
-#dziecko4 {
-  clear:both;
-      position: fixed;
-  float:left;
-  margin-bottom:0px;
-  background-color:lightblue;
-}
-
-#dziecko5 {
-  float:left;
-  margin-bottom:0px;
-  background-color:lightgreen;
-}
-
-#dziecko6 {
-  float:left;
-  margin-bottom:0px;
-  background-color:lightgreen;
-}
     </style>
 	
 	
@@ -78,52 +23,8 @@ Nick: Ja<br />
 Graczy: 0<br />
 Lvl: 1<br />
 
-<div>
-<!-- START http://forum.webhelp.pl/poczatkujacy-webmaster/obrazki-obok-siebie-t56595.html 
-<div style='float:left'>
-<img src='images/1.gif' >
-</div>
-<div style='position:absolute; left:50%'>
-<img src='images/2.gif'>
-</div>
-<div style='float:right'>
-<img src='images/3.gif' style='float:right'>
-</div>
-<!-- END http://forum.webhelp.pl/poczatkujacy-webmaster/obrazki-obok-siebie-t56595.html -->
-</div>
-
-<!--
-<script>
-
-function rysuj_mape(rozmiar_x, rozmiar_y, dostepne_kafelki)
-{
-	document.write('<div id="rodzic">');
-
-	for(var i=0; i<rozmiar_y*rozmiar_x; i++)
-	{
-		if( i != 0 && i % rozmiar_x == 0)
-			document.write('<div id="dziecko4"><img src="images/'+((i%dostepne_kafelki)+1)+'.gif" ></div>');
-		else
-			document.write('<div id="dziecko1"><img src="images/'+((i%dostepne_kafelki)+1)+'.gif" ></div>');
-	}
-	document.write('</div>');
-}
-
-rysuj_mape(10, 5, 9);
-</script>
--->
- 
 
 <script>
-/*
-var keys = [];
-
-for (var key in driversCounter) {
-    if (driversCounter.hasOwnProperty(key)) {
-        keys.push(key);
-    }
-}
-*/
 
 var mapa = {"ja":{"x":2,"y":2},"drzewo":{"x":1,"y":1}};
 
