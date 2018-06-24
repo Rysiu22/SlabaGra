@@ -4,23 +4,32 @@ error_reporting(0);
 //Mapa
 $json_plik = 'mapa.txt';
 
+if( isset($_COOKIE['PHPSESSID']) )
+{
+	$json_plik = $_COOKIE['PHPSESSID'].".json";
+}
+else
+{
+	$phpsessid = md5(rand()+rand()+rand());
+	$json_plik = $phpsessid.".json";
+	setcookie('PHPSESSID', $phpsessid);
+}
+	
 if( isset($_POST['json']) )
 {
 	$json = json_decode(str_replace('\"','"',$_POST['json']) , true);
 
 	if( ! file_exists($json_plik))
 	{
-		$tmp = json_encode($json);
-		$file = fopen($json_plik, 'w'); fwrite($file, $tmp);
-		fclose($file);
+		copy('mapa.txt',$json_plik);
+		$tmp = fread(fopen($json_plik, "r"), filesize($json_plik));
 	}
 	else
 	{
 		$tmp = fread(fopen($json_plik, "r"), filesize($json_plik));
 		$dane = json_decode($tmp, true);
 		
-		//dodac sprawdzanie wyjscia poza mape. Odczyt innej mapy?
-		//dodac kolizje z drzewami
+		//dodac odczyt innej mapy?
 		if( isset($json['run']) )
 		{
 			//kolizja obiektów, wyjścia poza mape
@@ -30,16 +39,31 @@ if( isset($_POST['json']) )
 			
 			foreach(array_keys($dane) as $obiekt)
 			{
-				if( ! in_array("wall",array_keys($dane[$obiekt])))
-				{
-					continue;
-				}
 				foreach(array_keys($dane[$obiekt]) as $ktory)
 				{
 					$tmp = $dane[$obiekt][$ktory];
-					if($ktory != "wall" && isset($tmp["x"]) && isset($tmp["y"]) && $x == $tmp["x"] && $y == $tmp["y"])
+					
+					//wykrywanie kolizji ze ścianami
+					if( isset($dane[$obiekt]["wall"]))
 					{
-						$go = false;
+						if(isset($tmp["x"]) && isset($tmp["y"]) && $x == $tmp["x"] && $y == $tmp["y"])
+						{
+							$go = false;
+						}
+					}
+					//Wykrywanie kolizji z potworami
+					else
+					{
+						if($obiekt != "ja" && isset($tmp["x"]) && isset($tmp["y"]) && $x == $tmp["x"] && $y == $tmp["y"])
+						{
+							$dane["ja"]["1"]["exp"] -= 1;
+							unset($dane[$obiekt][$ktory]);
+							if($dane["ja"]["1"]["exp"] == 0)
+							{
+								$dane["ja"]["1"]["lvl"] += 1;
+								$dane["ja"]["1"]["exp"] = $dane["ja"]["1"]["lvl"] * 2;
+							}
+						}
 					}
 				}
 			}
@@ -49,6 +73,59 @@ if( isset($_POST['json']) )
 				if($dane["ja"]["1"]["x"] != $x || $dane["ja"]["1"]['y'] != $y)
 				{
 					$dane["tura"] += 1;
+					
+					//szansa na pojawienie sie nowego potworami
+					//wykluczyc kratki tuż przy graczu, dodać maksymalna liczbe potworów aby się czasem nie zapętliło
+					$p = rand(0,99);
+					$dane["ja"]["1"]["fate"] = $p;
+					if ($p<35)
+					{
+						//losowanie pozycji
+						do
+						{
+							$make_again = false;
+							$new_mob = Array( x => rand(0,$dane["size_map"]["x"]), y => rand(0,$dane["size_map"]["y"]));
+							$nowy = rand(0,99);
+							$dane["ja"]["1"]["mob"] = $new_mob;
+							$add = array("monster1","monster2")[rand(0,1)];
+							
+							//spr. czy pozycja nie jest już zajęta
+							// zabiera za dużo zasobów
+							/*
+							foreach(array_keys($dane) as $obiekt)
+							{
+								if($make_again)
+								{
+									break;
+								}
+								foreach(array_keys($dane[$obiekt]) as $ktory)
+								{
+									if($ktory == $nowy)
+									{
+										$make_again = true;
+										break;
+									}
+										
+									$tmp = $dane[$obiekt][$ktory];
+									if(isset($tmp["x"]) && isset($tmp["y"]) && $new_mob["x"] == $tmp["x"] && $new_mob["x"] == $tmp["y"])
+									{
+										$make_again = true;
+										break;
+									}
+									$add = $obiekt;
+								}
+							}
+							*/
+						}while($make_again);
+						//dodanie nowego potwora
+						if($add != "")
+						{
+							$obiekt = $add;
+							$dane[$obiekt][$nowy]["x"] = $new_mob["x"];
+							$dane[$obiekt][$nowy]["y"] = $new_mob["y"];
+						}
+					}
+					
 				}
 
 				$dane["ja"]["1"]["x"] = $x;
@@ -73,7 +150,7 @@ if( isset($_POST['json']) )
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
 <head>
-<title>Psełdo gra</title>
+<title>Słaba gra</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <script src="http://localhost/gra2/jquery-3.1.1.js"></script>
@@ -90,11 +167,24 @@ if( isset($_POST['json']) )
 		width:40%;
   background-color:lightblue;
   border:3px dashed red;
-  font-size:1.4em;
+  font-size:1.0em;
 	}
 
 table {border-collapse: collapse;}
 td    {padding: 0px;}
+
+
+input[type=submit] {
+	float:left; /* dla id="control" */
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+}
 
 
     </style>
@@ -102,12 +192,14 @@ td    {padding: 0px;}
 	
 </head>
 <body>
-Nick: Ja<br />
 Świat: 1<br />
 Graczy: 0<br />
-Lvl: 1<br />
+Nick: Ja<br />
+<div id="lvl">Poziom: 1</div>
+<div id="exp">Potrzebne doświadcznie: 0</div>
 <div id="tura">Tura: 0</div>
-<div id="debug">Zmienna treść</div><br />
+
+<div id="control">
 
 <form action="javascript:run(lewo);">
   <input type="submit" value="<-">
@@ -130,14 +222,20 @@ Lvl: 1<br />
   <input type="submit" value="Run">
 </form>
 
+</div>
+
+<br /><br /><br />
+
+
+
 <div id="result"></div>
 
 <div id="map"></div>
 
-<script>
+<div id="debug" style="float:right;">Zmienna treść</div><br />
 
+<br /><br />
 
-</script>
 <script>
 
 var prawo = {"run":{"x":1,"y":0}};
@@ -146,7 +244,7 @@ var gora = {"run":{"x":0,"y":-1}};
 var dol = {"run":{"x":0,"y":1}};
 
 //var mapa = {"ja":{"x":2,"y":2},"drzewo":{"x":1,"y":1},"drzewo2":{"x":3,"y":3}};
-var mapa = {"ja":{"1":{"x":2,"y":2}}, "drzewo":{"wall":"true","1":{"x":1,"y":1},"2":{"x":3,"y":3}},"monster1":{"1":{"x":4,"y":0}},"size_map":{"x":10,"y":10},"tura":0};
+var mapa = {"ja":{"1":{"x":2,"y":2,"exp":5}}, "drzewo":{"wall":"true","1":{"x":1,"y":1},"2":{"x":3,"y":3}},"monster1":{"1":{"x":4,"y":0}},"size_map":{"x":10,"y":10},"tura":0};
 
 //jquery
 strona = 'http://localhost/gra2/index.php';
@@ -160,6 +258,8 @@ function run(dane)
  //alert(JSON.stringify(data)); 
  var licznik = "Returned from server:<br />\n"+JSON.stringify(data)+"<br />\n";
  $('#debug').html(licznik);
+ $('#lvl').html("Poziom: "+data["ja"]["1"]["lvl"]);
+ $('#exp').html("Potrzebne doświadcznie: "+data["ja"]["1"]["exp"]);
  $('#tura').html("Tura: "+data["tura"]);
  mapa = data;
  $('#map').html(rysuj_mape());
