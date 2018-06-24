@@ -1,5 +1,5 @@
 ﻿<?php
-//error_reporting(0);
+error_reporting(0);
 
 //Mapa
 $json_plik = 'mapa.txt';
@@ -19,8 +19,6 @@ if( isset($_POST['json']) )
 		$tmp = fread(fopen($json_plik, "r"), filesize($json_plik));
 		$dane = json_decode($tmp, true);
 		
-		$ignore = array("ja","size_map");
-		
 		//dodac sprawdzanie wyjscia poza mape. Odczyt innej mapy?
 		//dodac kolizje z drzewami
 		if( isset($json['run']) )
@@ -32,14 +30,14 @@ if( isset($_POST['json']) )
 			
 			foreach(array_keys($dane) as $obiekt)
 			{
-				if(in_array($obiekt, $ignore))
+				if( ! in_array("wall",array_keys($dane[$obiekt])))
 				{
 					continue;
 				}
 				foreach(array_keys($dane[$obiekt]) as $ktory)
 				{
 					$tmp = $dane[$obiekt][$ktory];
-					if($x == $tmp["x"] && $y == $tmp["y"])
+					if($ktory != "wall" && isset($tmp["x"]) && isset($tmp["y"]) && $x == $tmp["x"] && $y == $tmp["y"])
 					{
 						$go = false;
 					}
@@ -80,6 +78,7 @@ if( isset($_POST['json']) )
 #map {
 	display: flex;
 	justify-content: center;
+	
 	}
 
 	#debug {
@@ -141,7 +140,7 @@ var gora = {"run":{"x":0,"y":-1}};
 var dol = {"run":{"x":0,"y":1}};
 
 //var mapa = {"ja":{"x":2,"y":2},"drzewo":{"x":1,"y":1},"drzewo2":{"x":3,"y":3}};
-var mapa = {"ja":{"1":{"x":2,"y":2}}, "drzewo":{"1":{"x":1,"y":1},"2":{"x":3,"y":3}},"size_map":{"x":10,"y":10}};
+var mapa = {"ja":{"1":{"x":2,"y":2}}, "drzewo":{"wall":"true","1":{"x":1,"y":1},"2":{"x":3,"y":3}},"monster1":{"1":{"x":4,"y":0}},"size_map":{"x":10,"y":10}};
 
 //jquery
 strona = 'http://localhost/gra2/index.php';
@@ -197,7 +196,7 @@ function rysuj_mape() //rozmiar_x, rozmiar_y, dostepne_kafelki)
 				for(var ktory in mapa[obiekt])
 				{
 					if( mapa.hasOwnProperty(obiekt) && y==mapa[obiekt][ktory].y && x==mapa[obiekt][ktory].x)
-						write('<img style="position: relative; left: 0px; bottom: 0px; margin-top: -100%;" src="images/'+obiekt+'.gif" />');
+						write('<img style="position: relative; left: 0px; bottom: 0px; margin-top: -100%; display: block;" src="images/'+obiekt+'.gif" />');
 				}
 			}
 			write('\t\t</td>\n');
