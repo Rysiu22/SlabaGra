@@ -1,4 +1,5 @@
-<?php
+﻿<?php
+//error_reporting(0);
 
 //Mapa
 $json_plik = 'mapa.txt';
@@ -16,14 +17,40 @@ if( isset($_POST['json']) )
 	else
 	{
 		$tmp = fread(fopen($json_plik, "r"), filesize($json_plik));
-		$dane = json_decode($tmp);
+		$dane = json_decode($tmp, true);
+		
+		$ignore = array("ja","size_map");
 		
 		//dodac sprawdzanie wyjscia poza mape. Odczyt innej mapy?
 		//dodac kolizje z drzewami
 		if( isset($json['run']) )
 		{
-			$dane->ja->x += $json['run']['x'];
-			$dane->ja->y += $json['run']['y'];
+			//kolizja obiektów, wyjścia poza mape
+			$go = true;
+			$x=$dane["ja"]["1"]["x"] + $json['run']['x'];
+			$y=$dane["ja"]["1"]["y"] + $json['run']['y'];
+			
+			foreach(array_keys($dane) as $obiekt)
+			{
+				if(in_array($obiekt, $ignore))
+				{
+					continue;
+				}
+				foreach(array_keys($dane[$obiekt]) as $ktory)
+				{
+					$tmp = $dane[$obiekt][$ktory];
+					if($x == $tmp["x"] && $y == $tmp["y"])
+					{
+						$go = false;
+					}
+				}
+			}
+			//czy poza mapą
+			if($go && $x >= 0 && $y >= 0 && $x < $dane["size_map"]["x"] && $y < $dane["size_map"]["y"])
+			{
+				$dane["ja"]["1"]["x"] = $x;
+				$dane["ja"]["1"]['y'] = $y;
+			}
 		}
 
 		$tmp = json_encode($dane);
@@ -43,7 +70,8 @@ if( isset($_POST['json']) )
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
 <head>
-<title>Pse�do gra</title>
+<title>Psełdo gra</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <script src="http://localhost/gra2/jquery-3.1.1.js"></script>
 
@@ -71,10 +99,10 @@ td    {padding: 0px;}
 </head>
 <body>
 Nick: Ja<br />
-�wiat: 1<br />
+Świat: 1<br />
 Graczy: 0<br />
 Lvl: 1<br />
-<div id="debug">Zmienna tre��</div><br />
+<div id="debug">Zmienna treść</div><br />
 
 <form action="javascript:run(lewo);">
   <input type="submit" value="<-">
@@ -112,7 +140,8 @@ var lewo = {"run":{"x":-1,"y":0}};
 var gora = {"run":{"x":0,"y":-1}};
 var dol = {"run":{"x":0,"y":1}};
 
-var mapa = {"ja":{"x":2,"y":2},"drzewo":{"x":1,"y":1},"drzewo2":{"x":3,"y":3}};
+//var mapa = {"ja":{"x":2,"y":2},"drzewo":{"x":1,"y":1},"drzewo2":{"x":3,"y":3}};
+var mapa = {"ja":{"1":{"x":2,"y":2}}, "drzewo":{"1":{"x":1,"y":1},"2":{"x":3,"y":3}},"size_map":{"x":10,"y":10}};
 
 //jquery
 strona = 'http://localhost/gra2/index.php';
@@ -152,8 +181,8 @@ function rysuj_mape() //rozmiar_x, rozmiar_y, dostepne_kafelki)
 	function obrazek(){return 0;}
 	function write(dane){ out += dane; }
 	
-	var obiekty = Object.keys(mapa);
-	var obiekt = Object.keys(mapa)[0];
+	//var obiekty = Object.keys(mapa);
+	//var obiekt = Object.keys(mapa)[0];
 	
 	write('\n<table style="border: 0px solid black; CELLSPACING:0px; aling:center;">\n');
 	for(var y=0; y<rozmiar_y; y++)
@@ -165,8 +194,11 @@ function rysuj_mape() //rozmiar_x, rozmiar_y, dostepne_kafelki)
 			write('<img style="" src="images/'+obrazek()+'.gif" /><br />');
 			for(var obiekt in mapa)
 			{
-				if( mapa.hasOwnProperty(obiekt) && y==mapa[obiekt].y && x==mapa[obiekt].x)
-					write('<img style="position: relative; left: 0px; bottom: 0px; margin-top: -100%;" src="images/'+obiekt+'.gif" />');
+				for(var ktory in mapa[obiekt])
+				{
+					if( mapa.hasOwnProperty(obiekt) && y==mapa[obiekt][ktory].y && x==mapa[obiekt][ktory].x)
+						write('<img style="position: relative; left: 0px; bottom: 0px; margin-top: -100%;" src="images/'+obiekt+'.gif" />');
+				}
 			}
 			write('\t\t</td>\n');
 					
