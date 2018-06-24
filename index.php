@@ -46,6 +46,11 @@ if( isset($_POST['json']) )
 			//czy poza mapą
 			if($go && $x >= 0 && $y >= 0 && $x < $dane["size_map"]["x"] && $y < $dane["size_map"]["y"])
 			{
+				if($dane["ja"]["1"]["x"] != $x || $dane["ja"]["1"]['y'] != $y)
+				{
+					$dane["tura"] += 1;
+				}
+
 				$dane["ja"]["1"]["x"] = $x;
 				$dane["ja"]["1"]['y'] = $y;
 			}
@@ -101,6 +106,7 @@ Nick: Ja<br />
 Świat: 1<br />
 Graczy: 0<br />
 Lvl: 1<br />
+<div id="tura">Tura: 0</div>
 <div id="debug">Zmienna treść</div><br />
 
 <form action="javascript:run(lewo);">
@@ -140,7 +146,7 @@ var gora = {"run":{"x":0,"y":-1}};
 var dol = {"run":{"x":0,"y":1}};
 
 //var mapa = {"ja":{"x":2,"y":2},"drzewo":{"x":1,"y":1},"drzewo2":{"x":3,"y":3}};
-var mapa = {"ja":{"1":{"x":2,"y":2}}, "drzewo":{"wall":"true","1":{"x":1,"y":1},"2":{"x":3,"y":3}},"monster1":{"1":{"x":4,"y":0}},"size_map":{"x":10,"y":10}};
+var mapa = {"ja":{"1":{"x":2,"y":2}}, "drzewo":{"wall":"true","1":{"x":1,"y":1},"2":{"x":3,"y":3}},"monster1":{"1":{"x":4,"y":0}},"size_map":{"x":10,"y":10},"tura":0};
 
 //jquery
 strona = 'http://localhost/gra2/index.php';
@@ -154,6 +160,7 @@ function run(dane)
  //alert(JSON.stringify(data)); 
  var licznik = "Returned from server:<br />\n"+JSON.stringify(data)+"<br />\n";
  $('#debug').html(licznik);
+ $('#tura').html("Tura: "+data["tura"]);
  mapa = data;
  $('#map').html(rysuj_mape());
  })
@@ -183,7 +190,7 @@ function rysuj_mape() //rozmiar_x, rozmiar_y, dostepne_kafelki)
 	//var obiekty = Object.keys(mapa);
 	//var obiekt = Object.keys(mapa)[0];
 	
-	write('\n<table style="border: 0px solid black; CELLSPACING:0px; aling:center;">\n');
+	write('\n<table style="border: 0px solid black; CELLSPACING:0px; aling:center;position: relative;">\n');
 	for(var y=0; y<rozmiar_y; y++)
 	{
 		write('\t<tr>\n');
@@ -196,7 +203,7 @@ function rysuj_mape() //rozmiar_x, rozmiar_y, dostepne_kafelki)
 				for(var ktory in mapa[obiekt])
 				{
 					if( mapa.hasOwnProperty(obiekt) && y==mapa[obiekt][ktory].y && x==mapa[obiekt][ktory].x)
-						write('<img style="position: relative; left: 0px; bottom: 0px; margin-top: -100%; display: block;" src="images/'+obiekt+'.gif" />');
+						write('<div style=""><img style="position: relative; left: 0px; bottom: 0px; margin-top: -100%; display: block;" src="images/'+obiekt+'.gif" /></div>');
 				}
 			}
 			write('\t\t</td>\n');
